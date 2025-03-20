@@ -4,16 +4,17 @@ import { ConfirmationModal } from '../../UI';
 import { EventsService } from '../../services';
 import { useStatus } from '../../hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const eventsService = new EventsService()
 export function EventItem(props) {
   const [event, setEvent] = useState(props.event)
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false)
   const { setStatus } = useStatus()
   const [isExpired, setIsExpired] = useState(false);
   const queryClient = useQueryClient()
-
+  const navigate = useNavigate()
   const { mutate: deleteTodo } = useMutation({
     mutationKey: ['deleteEvent'],
     mutationFn: () => eventsService.deleteEventById(event.id),
@@ -23,70 +24,34 @@ export function EventItem(props) {
         queryKey: ['events'],
         initialPageParam: undefined
       })
-      setStatus(eventsService.autoSetStatus(false, 'Задачу видалено', 'success'))
+      setStatus(eventsService.autoSetStatus(false, 'Подію видалено', 'success'))
     },
     onError: (error) => setStatus(eventsService.autoSetStatus(false, error.message, 'error')),
     onSettled: () => setModalIsOpen(false),
   })
-
-  const { mutate: changeName } = useMutation({
-    mutationKey: ['changeTodo'],
-    mutationFn: () => eventsService.updateEvent(event.id, event),
-    onMutate: () => setStatus(eventsService.autoSetStatus(true, 'Очікування відповіді від сервера', 'info')),
-    onSuccess: () => {
-      queryClient.fetchInfiniteQuery({
-        queryKey: ['todos'],
-        initialPageParam: undefined
-      })
-      setStatus(eventsService.autoSetStatus(false, 'Задачу успішно оновлено', 'success'))
-    },
-    onError: (error) => setStatus(eventsService.autoSetStatus(false, error.message, 'error')),
-    onSettled: () => setIsEditMode(false),
-  })
-
-  const { mutate: changeToDone } = useMutation({
-    mutationKey: ['changeTodo'],
-    mutationFn: () => eventsService.updateEvent(event.id, {...event, isDone: true}),
-    onMutate: () => setStatus(eventsService.autoSetStatus(true, 'Очікування відповіді від сервера', 'info')),
-    onSuccess: () => {
-      queryClient.fetchInfiniteQuery({
-        queryKey: ['todos'],
-        initialPageParam: undefined
-      })
-      setStatus(eventsService.autoSetStatus(false, 'Задачі змінено статус', 'success'))
-    },
-    onError: (error) => setStatus(eventsService.autoSetStatus(false, error.message, 'error')),
-  })
-
+  const toggleEditMode = () => {
+    navigate(`create-update-event/${event.id}`)
+  }
   useEffect(() => {
-    if (event.dueDate) {
+    if (event?.dueDate) {
       const currentDate = new Date();
-      const todoDate = new Date(event.date);
+      const todoDate = new Date(event.dueDate);
       setIsExpired(todoDate < currentDate)
     }
     setEvent(props.event);
   }, [props.event]);
 
-  const changeEvent = (event) => {
-    setEvent((prev) => ({...prev, name: event.target.value}))
-  }
-
-  const toggleEditMode = () => { isEditMode ? changeName(): setIsEditMode(true) }
 
   return (
-    <div style={{ backgroundColor: event.isDone ? 'green' : isExpired ? 'purple' : '' }}>
-      {
-        !isEditMode ? <h1>{event.name}</h1> : 
-        <input value={event.name} onChange={changeEvent}></input>
-      }
-      <div>
-        <button onClick={toggleEditMode} disabled={event.isDone || isExpired}>{ isEditMode ? '\u2713' : '\u270F' }</button>
+    <div>
+      <h1>{event.title}</h1> 
+      <p>{event.description}</p>
+      <p>{event.dueDate}</p>
         <div>
-          <button onClick={changeToDone} disabled={event.isDone || isExpired}>&#10003;</button>
-          <button onClick={() => setModalIsOpen(true)}>&#x2715;</button>
+          <Button onClick={toggleEditMode} disabled={isExpired} variant='contained'>Редагувати</Button>
+          <Button onClick={() => setModalIsOpen(true)} variant='outlined'>Видалити</Button>
+          <ConfirmationModal isOpen={modalIsOpen} onClose={() => setModalIsOpen(false)} onConfirm={deleteTodo} text={"Ви дійсно хочете видалити дію"} isDelete={true}/>
         </div>
-        <ConfirmationModal isOpen={modalIsOpen} onClose={() => setModalIsOpen(false)} onConfirm={deleteTodo} text={"Ви дійсно хочете видалити дію"} isDelete={true}/>
-      </div>
     </div>
   );
 }

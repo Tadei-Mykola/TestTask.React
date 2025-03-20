@@ -1,7 +1,9 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useUser } from '../hooks';
+import { StatusProvider, useUser } from '../hooks';
 import { UserService, LocalStorageService } from '../services';
 import { useState, useEffect } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 const userService = new UserService();
 const localStorageService = new LocalStorageService();
@@ -27,5 +29,5 @@ export function PrivateUserRoute() {
     return <div>Loading...</div>;
   }
 
-  return user ? <Outlet /> : <Navigate to="/user/login" replace />;
+  return user ? <LocalizationProvider dateAdapter={AdapterDayjs}><StatusProvider><Outlet /></StatusProvider></LocalizationProvider> : <Navigate to="/user/login" replace />;
 }

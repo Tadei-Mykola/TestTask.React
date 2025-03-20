@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { Events, User } from './components';
+import { CreateUpdateEvent, Events, User } from './components';
 import { PrivateUserRoute } from './hooks';
 
 export function RoutesComponent() {
@@ -7,7 +7,9 @@ export function RoutesComponent() {
     <Routes>
       <Route path='/' element={<div>Welcome Home</div>} />
       <Route path="/events" element={<PrivateUserRoute />}>
-        <Route path="" element={<Events />} />
+        <Route index element={<Events />} />
+        <Route path="create-update-event" element={<CreateUpdateEvent />} />
+        <Route path='create-update-event/:eventId' element={<CreateUpdateEvent />} />
       </Route>
       <Route path='/user/*' element={<User/>}/>
     </Routes>

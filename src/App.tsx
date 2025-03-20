@@ -1,4 +1,3 @@
-import './App.scss'
 import { Layout } from './layout'
 import { UserProvider } from './hooks';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';

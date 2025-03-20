@@ -1,14 +1,12 @@
 
-import './loginUser.scss';
-import { Link } from 'react-router-dom';
-import { useForm } from "react-hook-form"
-import { yupResolver } from "@hookform/resolvers/yup"
-import { FormInput } from "../../../UI"
-import { UserService, LocalStorageService } from '../../../services';
-import { useUser } from '../../../hooks'
-import { useNavigate } from 'react-router-dom';
-import { loginSchema } from '../../../schemas';
-import { Button, FormGroup } from '@mui/material';
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Box, Button, FormGroup } from '@mui/material';
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from 'react-router-dom';
+import { FormInput } from "../../UI";
+import { useUser } from '../../hooks';
+import { loginSchema } from '../../schemas';
+import { LocalStorageService, UserService } from '../../services';
 
 const userService = new UserService()
 const localStorageService = new LocalStorageService()
@@ -39,11 +37,16 @@ export function LoginUser({setErrorMessage}) {
   ];
 
   return (
-    <div className="login-user">
-      <div className="registration">
-        <Link style={{textDecoration: 'none'}} to="../create">Реєстрація</Link>
-      </div>
-      <FormGroup style={{ width: '50%' }}>   
+    <Box display={'flex'}>
+      <Box  sx={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Link to="../create" style={{textDecoration: 'none'}}>Реєстрація</Link>
+      </Box>
+      <FormGroup sx={{flex: 1}}>   
         {formFields.map((field) => (
           <FormInput
             key={field.name}
@@ -55,7 +58,7 @@ export function LoginUser({setErrorMessage}) {
         ))}
         <Button onClick={handleSubmit(login)}>Увійти</Button>
       </FormGroup>
-    </div>
+    </Box>
   );
 }
 

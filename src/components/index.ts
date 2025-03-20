@@ -1,6 +1,6 @@
 export { User } from './user/user'
-export { CreateUser } from './user/createUser/createUser'
-export { LoginUser } from './user/loginUser/loginUser'
+export { CreateUser } from './user/createUser'
+export { LoginUser } from './user/loginUser'
 export { Header } from './header/header'
 export { Events } from './events/events' 
 export { EventItem } from './events/eventItem'

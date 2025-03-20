@@ -1,14 +1,12 @@
 
-import './createUser.scss';
-import { Link } from 'react-router-dom';
-import { useForm } from "react-hook-form"
-import { yupResolver } from "@hookform/resolvers/yup"
-import { UserService, LocalStorageService } from '../../../services';
-import { useUser } from '../../../hooks'
-import { useNavigate } from 'react-router-dom';
-import { registrationSchema } from '../../../schemas';
-import { FormInput } from "../../../UI"
-import { Button, FormGroup } from '@mui/material';
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Box, Button, FormGroup } from '@mui/material';
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../../hooks';
+import { registrationSchema } from '../../schemas';
+import { LocalStorageService, UserService } from '../../services';
+import { FormInput } from "../../UI";
 
 
 const userService = new UserService()
@@ -26,7 +24,6 @@ export function CreateUser( {setErrorMessage} ) {
   const navigate = useNavigate();
 
   const registration = (data) => {
-    console.log(data)
     userService.registration(data).then(async(response) => {
       localStorageService.setAccessToken(response.data.access_token)
       setUser(await userService.getUserData())
@@ -45,8 +42,8 @@ export function CreateUser( {setErrorMessage} ) {
 
 
   return (
-    <div className="create-user">
-      <FormGroup style={{ width: '50%' }}>
+    <Box display={'flex'}>
+      <FormGroup sx={{flex: 1}}>
         {formFields.map((field) => (
           <FormInput
             key={field.name}
@@ -59,11 +56,16 @@ export function CreateUser( {setErrorMessage} ) {
         <Button onClick={handleSubmit(registration)} >Зареєструватися</Button>
       </FormGroup>  
 
-      <div className="login">
+      <Box  sx={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
         <Link to="../login" style={{textDecoration: 'none'}}>Увійти</Link>
-      </div>
+      </Box>
 
-    </div>
+    </Box>
   );
 }
 

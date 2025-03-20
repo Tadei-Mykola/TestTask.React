@@ -1,10 +1,14 @@
-import { Button, FormGroup, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Box, Button, FormControlLabel, FormGroup, Radio, RadioGroup } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useStatus } from '../../hooks';
 import { EventInterface } from '../../interfaces/event.interfaces';
+import { createUpdateEventSchema } from '../../schemas';
 import { EventsService } from '../../services';
 import { FormInput } from '../../UI';
 
@@ -14,17 +18,25 @@ export function CreateUpdateEvent() {
   const { setStatus } = useStatus();
   const minDateTime = dayjs().add(1, 'hour');
   const queryClient = useQueryClient();
+  const { eventId } = useParams();
+  const isUpdating = !!eventId
+  const navigate = useNavigate()
+
+  const navigateToEvents = () => {
+    navigate('/events');
+  }
   const { mutate } = useMutation({
     mutationKey: ['addEvent'],
-    mutationFn: (event: EventInterface) => eventsService.createNewEvent(event),
+    mutationFn: (event: EventInterface) =>   isUpdating ? eventsService.updateEvent(+eventId, event) :eventsService.createNewEvent(event),
     onMutate: () => setStatus(eventsService.autoSetStatus(true, 'Очікування відповіді від сервера', 'info')),
     onSuccess: () => {
       queryClient.fetchInfiniteQuery({
         queryKey: ['events'],
         initialPageParam: undefined
       });
-      setStatus(eventsService.autoSetStatus(false, 'Задачу успішно додано', 'success'));
+      setStatus(eventsService.autoSetStatus(false, 'Подію успішно додано', 'success'));
       reset();
+      navigateToEvents()
     },
     onError: (error) => setStatus(eventsService.autoSetStatus(false, error.message, 'error'))
   });
@@ -33,7 +45,6 @@ export function CreateUpdateEvent() {
     register,
     setValue,
     handleSubmit,
-    setError,
     getValues,
     clearErrors,
     formState: { errors },
@@ -43,22 +54,39 @@ export function CreateUpdateEvent() {
       title: '',
       description: '',
       dueDate: minDateTime,
-      isDone: false,
       priority: 'NORMAL'
-    }
+    },
+    resolver: yupResolver(createUpdateEventSchema)
   });
+
+  useEffect(() => {
+    if (isUpdating) {
+      const fetchEvent = async () => {
+        try {
+          const event = await eventsService.getEventById(+eventId!);
+          reset({
+            title: event.title,
+            description: event.description,
+            dueDate: dayjs(event.dueDate),
+            priority: event.priority
+          });
+        } catch (error) {
+          console.error('Помилка при отриманні події:', error);
+          setStatus(eventsService.autoSetStatus(false, 'Не вдалося завантажити подію', 'error'));
+        }
+      };
+
+      fetchEvent();
+    }
+  }, [eventId])
 
   const checkDate = (newDate: dayjs.Dayjs | null) => {
     if (newDate && dayjs(newDate).isAfter(minDateTime)) {
       setValue('dueDate', newDate);
       clearErrors('dueDate');
-    } else {
-      setError('dueDate', {
-        type: 'manual',
-        message: 'Invalid date'
-      });
     }
   };
+
 
   const formFields: { label: string; name: 'title' | 'description' }[] = [
     { label: 'Тайтл', name: 'title' },
@@ -78,15 +106,19 @@ export function CreateUpdateEvent() {
       ))}
 
 
-      <RadioGroup defaultValue="NORMAL" {...register("priority")}>
-        <FormControlLabel value="NORMAL" control={<Radio />} label="Звичайна" />
-        <FormControlLabel value="IMPORTANT" control={<Radio />} label="Важлива" />
-        <FormControlLabel value="CRITICAL" control={<Radio />} label="Критична" />
+      <RadioGroup row defaultValue="NORMAL" >
+        <FormControlLabel value="NORMAL" control={<Radio {...register("priority")}/>} label="Звичайна" />
+        <FormControlLabel value="IMPORTANT" control={<Radio {...register("priority")}/>} label="Важлива" />
+        <FormControlLabel value="CRITICAL" control={<Radio {...register("priority")}/>} label="Критична" />
       </RadioGroup>
 
-      <DateTimePicker onChange={checkDate} minDateTime={minDateTime} value={getValues("dueDate")} />
+      <DateTimePicker  onChange={checkDate} minDateTime={minDateTime} value={getValues("dueDate") as dayjs.Dayjs} />
 
-      <Button onClick={handleSubmit((data) => mutate(data))}>&#10003;</Button>
+      <Box display="flex" gap={1} width="100%">
+        <Button sx={{ flex: 1 }} onClick={navigateToEvents}>Вернутися</Button>
+        <Button sx={{ flex: 1 }} variant="contained" color="primary" onClick={handleSubmit((data) => mutate(data as EventInterface))}>{ isUpdating ? "Зберегти" : "Створити"}</Button>
+      </Box>
+      
     </FormGroup>
   );
 }
